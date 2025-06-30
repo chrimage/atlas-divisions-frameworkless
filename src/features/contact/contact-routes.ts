@@ -3,7 +3,7 @@
  * Handles all contact form related routes and functionality
  */
 
-import type { FormSubmission, CloudflareAccessUser, Env } from '../../types/index.js';
+import type { FormSubmission, CloudflareAccessUser, Env, ExecutionContext } from '../../types/index.js';
 import type { CONFIG } from '../../config/index.js';
 
 // Import utilities
@@ -31,7 +31,7 @@ export class ContactRoutes {
   /**
    * Handle form submission
    */
-  static async handleSubmit(request: Request, env: Env, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response> {
+  static async handleSubmit(request: Request, env: Env, ctx: ExecutionContext, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response> {
     try {
       const formData = await request.formData();
       const parsedData = parseFormData(formData);
@@ -57,11 +57,13 @@ export class ContactRoutes {
       // Save to database
       await saveSubmission(env, submission);
 
-      // Send email notification asynchronously (doesn't block response)
+      // Send email notification asynchronously using ctx.waitUntil
       if (shouldSendEmail(config, env)) {
-        console.log("Sending admin notification");
-        await sendAdminNotification(env, submission);
-        console.log("Admin notification completed");
+        console.log("Scheduling admin notification via ctx.waitUntil");
+        ctx.waitUntil(sendAdminNotification(env, submission));
+        // Note: We don't await the result of sendAdminNotification here
+        // as ctx.waitUntil handles its execution outside the request-response lifecycle.
+        // Logging for completion would need to be inside sendAdminNotification or a separate mechanism.
       } else {
         logEmailStatus(config, env);
       }
@@ -161,7 +163,7 @@ export class ContactRoutes {
   /**
    * Route handler for contact-related paths
    */
-  static async handleRoute(pathname: string, request: Request, env: Env, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response | null> {
+  static async handleRoute(pathname: string, request: Request, env: Env, ctx: ExecutionContext, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response | null> {
     const method = request.method;
 
     // Contact form routes
@@ -176,7 +178,7 @@ export class ContactRoutes {
     
     // Form submission
     if (pathname === '/submit' && method === 'POST') {
-      return this.handleSubmit(request, env, corsHeaders, config);
+      return this.handleSubmit(request, env, ctx, corsHeaders, config);
     }
     
     // Admin panel

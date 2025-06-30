@@ -134,15 +134,19 @@ export async function extractUserFromAccessToken(request: Request, teamName?: st
       return null;
     }
 
-    // Verify JWT signature if team name is provided
+    // Verify JWT signature if teamName is provided (i.e., Cloudflare Access is intended)
     if (teamName) {
       const isSignatureValid = await verifyJWTSignature(userJWT, teamName);
       if (!isSignatureValid) {
-        console.error('JWT signature verification failed');
+        console.error('JWT signature verification failed. Access denied.');
         return null;
       }
     } else {
-      console.warn('JWT signature verification skipped - no team name provided');
+      // If a JWT is present but no teamName was provided for verification,
+      // this is a critical misconfiguration or an attempt to bypass auth.
+      // Deny access.
+      console.error('CRITICAL: JWT present but no teamName provided for verification. Access denied.');
+      return null;
     }
 
     // Decode the payload (base64url decode)

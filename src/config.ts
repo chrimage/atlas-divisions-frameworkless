@@ -273,10 +273,12 @@ function mergeConfig(base: any, overrides: any): any {
   return result;
 }
 
+import type { Env } from '../types'; // Import Env type
+
 /**
  * Validate configuration on startup
  */
-export function validateConfig(config: typeof CONFIG): string[] {
+export function validateConfig(config: typeof CONFIG, env?: Env): string[] { // Add env parameter
   const errors: string[] = [];
   
   if (!config.company.name || config.company.name === "Your Company Name") {
@@ -300,8 +302,24 @@ export function validateConfig(config: typeof CONFIG): string[] {
     errors.push("SECURITY WARNING: Wildcard '*' in CORS origins is not recommended for production");
   }
   
-  if (!config.security.cloudflareAccessTeamName) {
-    errors.push("SECURITY WARNING: Please set CONFIG.security.cloudflareAccessTeamName for JWT signature verification");
+  if (config.features.enableCloudflareAccess && !config.security.cloudflareAccessTeamName) {
+    errors.push("CRITICAL SECURITY CONFIGURATION ERROR: 'enableCloudflareAccess' is true, but 'cloudflareAccessTeamName' is not set in CONFIG.security. This will prevent JWT signature verification and deny admin access. Please set 'cloudflareAccessTeamName'.");
+  } else if (!config.security.cloudflareAccessTeamName && config.security.allowedAdminEmails.length > 0) {
+    // Only warn if Cloudflare Access is not enabled but JWTs might still be floating around from other services,
+    // or if the intention was to use it.
+    errors.push("SECURITY WARNING: 'cloudflareAccessTeamName' is not set in CONFIG.security. JWT signature verification will be skipped if a JWT is encountered. If you are using Cloudflare Access, this is a critical misconfiguration.");
+  } else if (!config.security.cloudflareAccessTeamName) {
+    // Generic warning if neither CF access nor admin emails are explicitly configured to suggest checking config
+    errors.push("CONFIG INFO: 'cloudflareAccessTeamName' is not set. JWT signature verification will be skipped. Ensure this is intended if JWT-based auth is used elsewhere.");
+  }
+
+  // Validate company name in production environments
+  // The `config` object here is the one resolved for the current environment.
+  // `env.ENVIRONMENT` reflects the actual environment string (e.g., "production", "development").
+  if (env && env.ENVIRONMENT && env.ENVIRONMENT.toLowerCase() === 'production') {
+    if (config.company.name && (config.company.name.includes("(DEV)") || config.company.name.includes("(STAGING)"))) {
+      errors.push(`PRODUCTION WARNING: Company name "${config.company.name}" appears to be a non-production name. Please verify CONFIG.company.name for the production environment.`);
+    }
   }
   
   return errors;

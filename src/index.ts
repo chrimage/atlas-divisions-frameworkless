@@ -10,7 +10,7 @@
 import { getConfig, validateConfig } from "./config/index.js";
 
 // Import types
-import type { Env } from './types/index.js';
+import type { Env, ExecutionContext } from './types/index.js';
 
 // Import utilities
 import { getCorsHeaders, handlePreflightRequest, createErrorResponse } from './utils/cors.js';
@@ -20,7 +20,7 @@ import { ContactRoutes } from './features/contact/contact-routes.js';
 import { WebsiteRoutes } from './features/website/website-routes.js';
 
 export default {
-	async fetch(request: Request, env: Env): Promise<Response> {
+	async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
 		const url = new URL(request.url);
 		// Pass the full env object to getConfig to access environment variables
 		const config = getConfig(env.ENVIRONMENT, env);
@@ -45,11 +45,12 @@ export default {
 			let response: Response | null = null;
 			
 			// Try website routes first (homepage, about, services)
+			// TODO: Update WebsiteRoutes to accept ctx if it performs operations needing waitUntil
 			response = await WebsiteRoutes.handleRoute(url.pathname, request, env, corsHeaders, config);
 			if (response) return response;
 			
 			// Try contact routes (contact form, submit, admin)
-			response = await ContactRoutes.handleRoute(url.pathname, request, env, corsHeaders, config);
+			response = await ContactRoutes.handleRoute(url.pathname, request, env, ctx, corsHeaders, config);
 			if (response) return response;
 			
 			// No route matched - return 404
