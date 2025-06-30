@@ -7,17 +7,12 @@ export const SECURITY_CONFIG = {
   // Security Configuration
   security: {
     // Email addresses allowed to access admin panel (if not using Cloudflare Access)
-    // TODO: Configure with your actual admin emails
-    allowedAdminEmails: [
-      "admin@yourdomain.com",
-      "owner@yourdomain.com"
-      // Add more admin emails as needed
-    ],
+    // These will be populated from environment variables.
+    allowedAdminEmails: [] as string[],
     
     // Cloudflare Access team name for JWT verification
-    // This should be your team name from the Cloudflare Zero Trust dashboard
-    // Example: if your dashboard is at "mycompany.cloudflareaccess.com", use "mycompany"
-    cloudflareAccessTeamName: "", // TODO: Set your Cloudflare Access team name
+    // This will be populated from an environment variable.
+    cloudflareAccessTeamName: "",
     
     // CORS configuration
     cors: {
@@ -30,11 +25,16 @@ export const SECURITY_CONFIG = {
     contentSecurityPolicy: {
       directives: {
         'default-src': ["'self'"],
-        'script-src': ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"], // TODO: Remove 'unsafe-inline' and use nonce
-        'style-src': ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        // 'unsafe-inline' removed. Inline scripts must use nonces or be externalized.
+        'script-src': ["'self'", "https://cdnjs.cloudflare.com"],
+        // 'unsafe-inline' removed. Inline styles must use nonces/hashes or be externalized.
+        // This may break dynamically injected theme styles from src/styles/theme.ts.
+        // TODO: If styles are broken, implement a nonce-based strategy for inline <style> tags
+        // or investigate serving theme CSS via a <link> to a dynamically generated CSS file.
+        'style-src': ["'self'", "https://fonts.googleapis.com"],
         'font-src': ["'self'", "https://fonts.gstatic.com"],
-        'img-src': ["'self'", "data:", "https:"],
-        'connect-src': ["'self'", "https://raw.githubusercontent.com"],
+        'img-src': ["'self'", "data:", "https:"], // data: for potential inline SVGs or small images
+        'connect-src': ["'self'", "https://raw.githubusercontent.com"], // For Three.js globe GeoJSON
         'frame-ancestors': ["'none'"],
         'form-action': ["'self'"],
         'base-uri': ["'self'"],

@@ -3,6 +3,7 @@
  */
 
 import { generateThemeCSS } from '../styles/theme.js';
+import type { CONFIG } from '../config/index.js'; // Import CONFIG
 
 /**
  * HTML escape utility to prevent XSS attacks
@@ -16,7 +17,7 @@ function escapeHtml(unsafe: string): string {
     .replace(/'/g, "&#039;");
 }
 
-export function getErrorHTML(error: string, config: any): string {
+export function getErrorHTML(error: string, config: CONFIG): string {
 	return `<!DOCTYPE html>
 <html lang="en">
 <head>

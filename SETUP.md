@@ -110,6 +110,10 @@ cp .env.example .env
   "vars": {
     "FROM_EMAIL": "contact@yourdomain.com",       // Your sending email
     "ADMIN_EMAIL": "admin@yourdomain.com",        // Where notifications go
+    // TODO: Add ALLOWED_ADMIN_EMAILS and CLOUDFLARE_ACCESS_TEAM_NAME here
+    // Example:
+    // "ALLOWED_ADMIN_EMAILS": "admin1@example.com,admin2@example.com",
+    // "CLOUDFLARE_ACCESS_TEAM_NAME": "your-team-name",
     "ENVIRONMENT": "production"
   },
   "send_email": [
@@ -132,44 +136,41 @@ CLOUDFLARE_ACCOUNT_ID=your_actual_account_id
 CLOUDFLARE_DATABASE_ID=your_actual_database_id
 
 # Email configuration
-FROM_EMAIL=contact@yourdomain.com
-ADMIN_EMAIL=admin@yourdomain.com
-ALLOWED_ADMIN_EMAILS=admin@yourdomain.com,manager@yourdomain.com
+FROM_EMAIL=contact@yourdomain.com # Sender for notification emails
+ADMIN_EMAIL=admin@yourdomain.com # Recipient for notification emails
+# MG_DOMAIN=your_mailgun_domain_here # Also in wrangler.jsonc if not using secrets
+# MG_API_KEY=your_mailgun_api_key_here # Also in wrangler.jsonc if not using secrets
+
+# Admin Access Configuration
+# Comma-separated list of email addresses for basic admin access (if Cloudflare Access is not used or as a fallback).
+# This is read by the worker from an environment variable.
+ALLOWED_ADMIN_EMAILS="admin1@example.com,admin2@example.com"
+
+# Your Cloudflare Access team name (e.g., "your-team" from "your-team.cloudflareaccess.com")
+# Required for JWT signature validation if Cloudflare Access is enabled in the worker config.
+# This is read by the worker from an environment variable.
+CLOUDFLARE_ACCESS_TEAM_NAME="your-team-name"
 
 # Environment
-ENVIRONMENT=production
+ENVIRONMENT=development # Set to 'production' for production secrets, 'development' for .dev.vars or .env
 ```
 
-⚠️ **SECURITY WARNING:** The `.gitignore` file is configured to prevent these files from being committed. Verify this before committing any changes.
+⚠️ **SECURITY WARNING:** The `.gitignore` file is configured to prevent `wrangler.jsonc` and `.env` files from being committed. Ensure your actual secrets are not in the repository. For production, prefer `wrangler secret put <VAR_NAME>` over `wrangler.jsonc` vars or `.env` files.
 
-### Update Configuration Variables
+### Update Non-Sensitive Configuration Variables
 
-Edit `src/config.ts` to customize your deployment:
+Edit `src/config/brand.ts`, `src/config/contact.ts`, and `src/config/website.ts` (or the main `src/config.ts` for older versions) to customize non-sensitive aspects of your deployment like company name, service types, UI text, etc.
+Sensitive values like `allowedAdminEmails` and `cloudflareAccessTeamName` are now managed via environment variables/secrets as described above and in `wrangler.example.jsonc` / `.env.example`.
 
+Example of what you might customize in `src/config/brand.ts`:
 ```typescript
-export const CONFIG = {
-  // Company/Organization Info
+export const BRAND_CONFIG = {
   company: {
-    name: "Your Company Name",
-    tagline: "Professional Services - Get in touch with us"
+    name: "Atlas Divisions", // Your actual company name
+    tagline: "Solutions That Outlast the Storm",
+    // ... other brand details
   },
-  
-  // Service Types for Contact Form
-  serviceTypes: [
-    "General Inquiry",
-    "Technical Support", 
-    "Sales",
-    "Partnership",
-    "Other"
-  ],
-  
-  // Admin Panel Settings
-  admin: {
-    allowedEmails: [
-      "admin@yourdomain.com",
-      "manager@yourdomain.com"
-    ]
-  }
+  // ... styling ...
 };
 ```
 
@@ -198,7 +199,8 @@ export const CONFIG = {
 
 ### Alternative: Basic Email Protection
 
-If you don't want to use Cloudflare Access, the system includes basic email-based protection. Update the `allowedEmails` array in your config.
+If you don't want to use Cloudflare Access (i.e., `features.enableCloudflareAccess` is `false` in `src/config/contact.ts` and `features.enableAdminAuth` is `true`), the system uses basic email-based protection.
+Ensure the `ALLOWED_ADMIN_EMAILS` environment variable is set with a comma-separated list of authorized admin email addresses. These emails are checked against the `email` claim in the JWT provided by Cloudflare (e.g., from a general login to your domain, not necessarily a specific Access application).
 
 ## 🚀 Step 6: Deploy
 
@@ -328,6 +330,11 @@ curl -X POST http://localhost:8787/submit \
    wrangler secret put ADMIN_EMAIL
    wrangler secret put CLOUDFLARE_ACCOUNT_ID
    wrangler secret put CLOUDFLARE_DATABASE_ID
+   wrangler secret put ALLOWED_ADMIN_EMAILS
+   wrangler secret put CLOUDFLARE_ACCESS_TEAM_NAME
+   wrangler secret put MG_API_KEY
+   wrangler secret put MG_DOMAIN
+   # etc. for other secrets
    ```
 
 3. **Verify .gitignore protection:**

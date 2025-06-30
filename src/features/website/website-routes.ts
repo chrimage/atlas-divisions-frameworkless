@@ -4,6 +4,7 @@
  */
 
 import type { Env } from '../../types/index.js';
+import type { CONFIG } from '../../config/index.js'; // Import CONFIG type
 import { createHtmlResponse, createErrorResponse } from '../../utils/cors.js';
 import { getHomepageHTML } from './website-templates.js';
 
@@ -11,14 +12,14 @@ export class WebsiteRoutes {
   /**
    * Handle homepage display
    */
-  static async handleHomepage(request: Request, env: Env, corsHeaders: Record<string, string>, config: any): Promise<Response> {
+  static async handleHomepage(request: Request, env: Env, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response> {
     return await getHomepageHTML(corsHeaders, config);
   }
 
   /**
    * Handle about page (future feature)
    */
-  static async handleAbout(request: Request, env: Env, corsHeaders: Record<string, string>, config: any): Promise<Response> {
+  static async handleAbout(request: Request, env: Env, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response> {
     // Future implementation for dedicated about page
     return createErrorResponse('About page coming soon', corsHeaders, 404);
   }
@@ -26,7 +27,7 @@ export class WebsiteRoutes {
   /**
    * Handle services page (future feature)
    */
-  static async handleServices(request: Request, env: Env, corsHeaders: Record<string, string>, config: any): Promise<Response> {
+  static async handleServices(request: Request, env: Env, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response> {
     // Future implementation for dedicated services page
     return createErrorResponse('Services page coming soon', corsHeaders, 404);
   }
@@ -34,7 +35,7 @@ export class WebsiteRoutes {
   /**
    * Route handler for website-related paths
    */
-  static async handleRoute(pathname: string, request: Request, env: Env, corsHeaders: Record<string, string>, config: any): Promise<Response | null> {
+  static async handleRoute(pathname: string, request: Request, env: Env, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response | null> {
     const method = request.method;
 
     // Homepage
