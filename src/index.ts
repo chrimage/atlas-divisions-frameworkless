@@ -1,29 +1,23 @@
 /**
- * Contact Form & Admin Panel System 🚀
- * Single Worker handling contact form + admin panel
+ * Atlas Divisions Website & Contact System 🌍
+ * Modular architecture with feature-based routing
  *
- * This is a genericized version - customize via src/config.ts
+ * Features:
+ * - Website: Brand presence and homepage
+ * - Contact: Contact form and admin management
  */
 
-import { CONFIG, getConfig, validateConfig } from "./config.js";
+import { getConfig, validateConfig } from "./config/index.js";
 
 // Import types
-import type { FormSubmission, CloudflareAccessUser, Env } from './types/index.js';
+import type { Env } from './types/index.js';
 
 // Import utilities
-import { extractUserFromAccessToken, validateAdminAccess } from './utils/auth.js';
-import { sendAdminNotification, shouldSendEmail, logEmailStatus } from './utils/email.js';
-import { validateFormSubmission, parseFormData, createFormSubmission } from './utils/validation.js';
-import { saveSubmission, getAllSubmissions, updateSubmissionStatus } from './utils/database.js';
-import { getCorsHeaders, handlePreflightRequest, createHtmlResponse, createErrorResponse, createRedirectResponse } from './utils/cors.js';
-import { validateCSRFToken, getSessionId } from './utils/csrf.js';
+import { getCorsHeaders, handlePreflightRequest, createErrorResponse } from './utils/cors.js';
 
-// Import templates
-import { getHomepageHTML } from './templates/homepage.js';
-import { getContactFormHTML } from './templates/contact-form.js';
-import { getSuccessHTML } from './templates/success.js';
-import { getErrorHTML } from './templates/error.js';
-import { getAdminHTML } from './templates/admin.js';
+// Import feature modules
+import { ContactRoutes } from './features/contact/contact-routes.js';
+import { WebsiteRoutes } from './features/website/website-routes.js';
 
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
@@ -45,34 +39,19 @@ export default {
 		}
 
 		try {
-			let response: Response;
+			// Feature-based routing system
+			let response: Response | null = null;
 			
-			// Atlas Divisions homepage
-			if (url.pathname === '/' && request.method === 'GET') {
-				response = await getHomepageHTML(corsHeaders);
-			}
-			// Simple contact form (legacy route)
-			else if (url.pathname === '/contact-form' && request.method === 'GET') {
-				response = createHtmlResponse(getContactFormHTML(config), corsHeaders);
-			}
-			// Submit contact form
-			else if (url.pathname === '/submit' && request.method === 'POST') {
-				response = await handleSubmit(request, env, corsHeaders, config);
-			}
-			// Admin panel
-			else if (url.pathname === '/admin' && request.method === 'GET') {
-				response = await handleAdmin(request, env, corsHeaders, config);
-			}
-			// Update submission status
-			else if (url.pathname === '/admin/update' && request.method === 'POST') {
-				response = await handleStatusUpdate(request, env, corsHeaders, config);
-			}
-			// Handle unknown routes
-			else {
-				response = createErrorResponse('Not Found', corsHeaders, 404);
-			}
+			// Try website routes first (homepage, about, services)
+			response = await WebsiteRoutes.handleRoute(url.pathname, request, env, corsHeaders, config);
+			if (response) return response;
 			
-			return response;
+			// Try contact routes (contact form, submit, admin)
+			response = await ContactRoutes.handleRoute(url.pathname, request, env, corsHeaders, config);
+			if (response) return response;
+			
+			// No route matched - return 404
+			return createErrorResponse('Not Found', corsHeaders, 404);
 			
 		} catch (error) {
 			console.error('Worker error:', error);
@@ -80,130 +59,6 @@ export default {
 		}
 	},
 } satisfies ExportedHandler<Env>;
-
-
-async function handleSubmit(request: Request, env: Env, corsHeaders: Record<string, string>, config: typeof CONFIG) {
-	try {
-		const formData = await request.formData();
-		const parsedData = parseFormData(formData);
-		
-		// Validate form data
-		const validation = validateFormSubmission(parsedData, config);
-		if (!validation.isValid) {
-			return createHtmlResponse(
-				getErrorHTML(validation.errors.join(', '), config),
-				corsHeaders,
-				400
-			);
-		}
-
-		// Create submission object
-		const submissionData = createFormSubmission(parsedData);
-		const submission: FormSubmission = {
-			id: crypto.randomUUID(),
-			...submissionData,
-			timestamp: new Date().toISOString()
-		};
-
-		// Save to database
-		await saveSubmission(env, submission);
-
-		// Send email notification asynchronously (doesn't block response)
-		if (shouldSendEmail(config, env)) {
-			console.log("Sending admin notification");
-			await sendAdminNotification(env, submission);
-			console.log("Admin notification completed");
-		} else {
-			logEmailStatus(config, env);
-		}
-
-		return createHtmlResponse(getSuccessHTML(config), corsHeaders);
-	} catch (error) {
-		console.error('Submit error:', error);
-		return createHtmlResponse(
-			getErrorHTML('Database error occurred', config),
-			corsHeaders,
-			500
-		);
-	}
-}
-
-async function handleAdmin(request: Request, env: Env, corsHeaders: Record<string, string>, config: typeof CONFIG) {
-	try {
-		// Extract user identity from Cloudflare Access token
-		const user = await extractUserFromAccessToken(request, config.security.cloudflareAccessTeamName);
-		
-		// Validate admin access
-		if (!validateAdminAccess(user, config)) {
-			if (!user) {
-				return createErrorResponse('Unauthorized - Admin access required', corsHeaders, 401);
-			} else {
-				return createErrorResponse('Forbidden - Email not in admin list', corsHeaders, 403);
-			}
-		}
-
-		if (user) {
-			console.log(`Admin access: ${user.email}`);
-		}
-
-		// Get all submissions
-		const submissions = await getAllSubmissions(env);
-
-		return createHtmlResponse(getAdminHTML(submissions, user, config), corsHeaders);
-	} catch (error) {
-		console.error('Admin error:', error);
-		return createErrorResponse('Internal Server Error', corsHeaders, 500);
-	}
-}
-
-async function handleStatusUpdate(request: Request, env: Env, corsHeaders: Record<string, string>, config: typeof CONFIG) {
-	try {
-		// Extract user identity from Cloudflare Access token
-		const user = await extractUserFromAccessToken(request, config.security.cloudflareAccessTeamName);
-		
-		if (!user) {
-			return createErrorResponse('Unauthorized - Admin access required', corsHeaders, 401);
-		}
-		
-		const formData = await request.formData();
-		const id = formData.get('id')?.toString();
-		const status = formData.get('status')?.toString();
-		const csrfToken = formData.get('csrf_token')?.toString();
-
-		if (!id || !status) {
-			return createErrorResponse('Missing ID or status', corsHeaders, 400);
-		}
-		
-		// Validate CSRF token
-		if (!csrfToken) {
-			return createErrorResponse('Missing CSRF token', corsHeaders, 400);
-		}
-		
-		const sessionId = getSessionId(user);
-		if (!validateCSRFToken(sessionId, csrfToken)) {
-			return createErrorResponse('Invalid CSRF token', corsHeaders, 403);
-		}
-
-		// Validate status values using imported validation
-		const validStatuses = config.admin.statusOptions.map((option: any) => option.value);
-		if (!validStatuses.includes(status)) {
-			return createErrorResponse('Invalid status value', corsHeaders, 400);
-		}
-
-		console.log(`Status update: ${id} -> ${status} by ${user?.email || 'unknown'}`);
-
-		// Update submission status using database utility
-		await updateSubmissionStatus(env, id, status);
-
-		// Redirect back to admin panel
-		return createRedirectResponse('/admin', corsHeaders);
-	} catch (error) {
-		console.error('Update error:', error);
-		return createErrorResponse('Update failed', corsHeaders, 500);
-	}
-}
-
-
 
 
 

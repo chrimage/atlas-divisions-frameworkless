@@ -1,9 +1,9 @@
 {
-	"name": "contact-form-admin-template",
+	"name": "atlas-divisions-website",
 	"version": "1.0.0",
 	"private": true,
-	"description": "Contact form and admin panel template for Cloudflare Workers",
-	"keywords": ["cloudflare", "workers", "contact-form", "admin-panel", "d1", "email"],
+	"description": "Atlas Divisions website with modular contact form and brand presence",
+	"keywords": ["atlas-divisions", "cloudflare", "workers", "contact-form", "brand-website", "d1", "email"],
 	"scripts": {
 		"deploy": "wrangler deploy",
 		"dev": "wrangler dev",

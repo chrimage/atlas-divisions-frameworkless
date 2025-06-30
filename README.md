@@ -1,15 +1,16 @@
-# Atlas Divisions - Frameworkless Landing Page
+# Atlas Divisions - Modular Website & Contact System
 
-A professional landing page built without frameworks, featuring an interactive Three.js globe animation and contact form functionality.
+A professional website with modular architecture featuring brand presence and contact form functionality, built on Cloudflare Workers.
 
 ## About
 
-This project is a rebuild of the Atlas Divisions landing page using vanilla HTML, CSS, and JavaScript instead of the Astro framework. It includes:
+This project provides a complete solution for the Atlas Divisions brand with a clean separation between website features and contact form functionality. It includes:
 
-- Interactive Three.js globe visualization
-- Contact form with Cloudflare Workers backend
-- Responsive design with dark theme
-- Admin dashboard for managing inquiries
+- **Modular Architecture**: Feature-based routing with separated concerns
+- **Brand Website**: Professional landing page with Three.js globe visualization
+- **Contact System**: Comprehensive contact form with admin management
+- **Responsive Design**: Mobile-first dark theme with Atlas brand colors
+- **Admin Dashboard**: Complete submission management system
 
 ## Brand Details
 
@@ -31,14 +32,28 @@ This project is a rebuild of the Atlas Divisions landing page using vanilla HTML
 
 ```
 ├── src/
-│   ├── index.ts          # Main Worker code
-│   └── config.ts         # Configuration
-├── static/
-│   └── index.html        # Landing page
-├── docs/                 # Documentation
-├── test/                 # Tests
-├── schema.sql           # Database schema
-└── wrangler.jsonc       # Cloudflare config
+│   ├── index.ts                    # Main Worker entry point
+│   ├── config/                     # Modular configuration
+│   │   ├── index.ts               # Combined config with environment support
+│   │   ├── brand.ts               # Atlas Divisions brand identity
+│   │   ├── contact.ts             # Contact form configuration
+│   │   ├── website.ts             # Website structure & content
+│   │   └── security.ts            # Security & CORS settings
+│   ├── features/                   # Feature-based modules
+│   │   ├── contact/               # Contact form feature
+│   │   │   ├── contact-routes.ts  # Contact form routes & handlers
+│   │   │   └── contact-templates.ts # Contact form templates
+│   │   └── website/               # Website feature
+│   │       ├── website-routes.ts  # Website routes & handlers
+│   │       └── website-templates.ts # Homepage & brand templates
+│   ├── templates/                  # Shared templates (success, error, admin)
+│   ├── utils/                      # Shared utilities
+│   ├── styles/                     # Theme generation
+│   └── types/                      # TypeScript types
+├── docs/                           # Documentation
+├── test/                           # Tests
+├── schema.sql                     # Database schema
+└── wrangler.example.jsonc         # Example Cloudflare config
 ```
 
 ## Development
@@ -57,19 +72,49 @@ npm test
 npm run deploy
 ```
 
+## Architecture
+
+### Modular Design
+The application uses a **feature-based architecture** that separates concerns:
+
+- **Website Feature**: Homepage, brand presence, and general site functionality
+- **Contact Feature**: Contact form, submission handling, and admin management
+- **Shared Configuration**: Modular configuration system with environment overrides
+- **Shared Utilities**: Database, email, authentication, and validation utilities
+
+### Route Structure
+- `/` - Homepage (enhanced brand presence)
+- `/contact` - Contact form (primary feature) 
+- `/submit` - Form submission endpoint
+- `/admin` - Admin dashboard
+- `/admin/update` - Status update endpoint
+
+### Benefits
+✅ **Separation of Concerns** - Contact form is a distinct, self-contained feature  
+✅ **Scalable Architecture** - Easy to add new features without touching existing code  
+✅ **Maintainable Codebase** - Clear boundaries between website and contact functionality  
+✅ **Enhanced Brand Presence** - Website can grow as a comprehensive brand platform  
+✅ **Contact Form as Primary Feature** - Prominent placement with dedicated endpoints
+
 ## Features
+
+### Enhanced Brand Website
+- Professional homepage with Atlas Divisions identity
+- Interactive Three.js globe visualization
+- Service showcase with emergency response highlighting
+- Mobile-responsive design with Atlas color scheme
+
+### Comprehensive Contact System
+- Dedicated contact form with validation
+- Email notifications via Mailgun/Cloudflare
+- Admin dashboard for managing submissions
+- CSRF protection and secure authentication
 
 ### Three.js Globe
 - Interactive world map visualization
 - Auto-rotation with mouse interaction
 - Responsive sizing for different screen sizes
 - Fallback for failed data loading
-
-### Contact Form
-- Form submission with validation
-- Email notifications via Cloudflare
-- Admin dashboard for managing submissions
-- Copy-to-clipboard email functionality
 
 ### Services
 1. Auto & Home Systems Repair

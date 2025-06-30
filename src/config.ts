@@ -191,7 +191,7 @@ export const CONFIG = {
     
     // CORS configuration
     cors: {
-      allowedOrigins: [], // TODO: In production, specify your domains (remove wildcard)
+      allowedOrigins: [] as string[], // TODO: In production, specify your domains (remove wildcard)
       allowedMethods: ["GET", "POST", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"]
     },
@@ -295,7 +295,7 @@ export function validateConfig(config: typeof CONFIG): string[] {
     errors.push("SECURITY WARNING: Please configure specific allowed origins in CONFIG.security.cors.allowedOrigins (currently allowing all origins)");
   }
   
-  if (config.security.cors.allowedOrigins.includes("*" as any)) {
+  if (config.security.cors.allowedOrigins.includes("*")) {
     errors.push("SECURITY WARNING: Wildcard '*' in CORS origins is not recommended for production");
   }
   

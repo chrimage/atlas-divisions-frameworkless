@@ -15,8 +15,10 @@ export function generateCSRFToken(): string {
  */
 const csrfTokenStore = new Map<string, { token: string; timestamp: number }>();
 
-// Clean up expired tokens every 5 minutes
-setInterval(() => {
+/**
+ * Clean up expired tokens (called during validation to keep memory usage low)
+ */
+function cleanupExpiredTokens(): void {
   const now = Date.now();
   const expiration = 30 * 60 * 1000; // 30 minutes
   
@@ -25,7 +27,7 @@ setInterval(() => {
       csrfTokenStore.delete(key);
     }
   }
-}, 5 * 60 * 1000);
+}
 
 /**
  * Store a CSRF token for a session
@@ -46,6 +48,9 @@ export function storeCSRFToken(sessionId: string, token: string): void {
  * @returns boolean indicating if token is valid
  */
 export function validateCSRFToken(sessionId: string, submittedToken: string): boolean {
+  // Clean up expired tokens periodically during validation
+  cleanupExpiredTokens();
+  
   const stored = csrfTokenStore.get(sessionId);
   
   if (!stored) {
