@@ -53,8 +53,8 @@ export default {
 			response = await ContactRoutes.handleRoute(url.pathname, request, env, ctx, corsHeaders, config);
 			if (response) return response;
 			
-			// No route matched - return 404
-			return createErrorResponse('Not Found', corsHeaders, 404);
+			// No route matched - delegate to static asset handler
+			return env.ASSETS.fetch(request);
 			
 		} catch (error) {
 			console.error('Worker error:', error);

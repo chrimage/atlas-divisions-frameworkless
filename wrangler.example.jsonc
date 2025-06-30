@@ -14,6 +14,7 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	
 	// TODO: Change this to your worker name (letters, numbers, hyphens only)
+	// For example, "my-worker-prod" for production, "my-worker-dev" for development.
 	"name": "your-contact-form",
 	
 	"main": "src/index.ts",
@@ -36,10 +37,12 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			// TODO: Change to your database name
+			// TODO: Change to your database name.
+			// Consider using different names for different environments,
+			// e.g., "your-contact-db-prod", "your-contact-db-dev".
 			"database_name": "your-contact-db",
-			// TODO: Replace with your D1 database ID
-			// Get this by running: wrangler d1 create your-contact-db
+			// TODO: Replace with your D1 database ID. This will be unique per database.
+			// Get this by running: wrangler d1 create <database_name>
 			// SECURITY: This is sensitive - never commit the real value
 			"database_id": "00000000-0000-0000-0000-000000000000"
 		}
@@ -66,7 +69,15 @@
 		// TODO: Your Cloudflare Access team name (e.g., "your-team" from "your-team.cloudflareaccess.com")
 		"CLOUDFLARE_ACCESS_TEAM_NAME": "",
 		
+		// TODO: Set to "development" for local/dev, "staging" for staging, or "production" for live.
+		// This can also be managed more robustly using the "env" block below.
 		"ENVIRONMENT": "production"
+	},
+
+	"assets": {
+		"binding": "ASSETS",
+		"directory": "./static",
+		"not_found_handling": "pass"
 	}
 	
 	/**
@@ -82,12 +93,32 @@
 	// ],
 	
 	// Environment-specific variables
+	// For more structured environment management, you can define different settings here.
+	// For example, to set different variables for a "staging" environment:
 	// "env": {
 	//   "staging": {
+	//     "name": "your-contact-form-staging", // Override the top-level worker name
 	//     "vars": {
 	//       "ENVIRONMENT": "staging",
 	//       "ADMIN_EMAIL": "staging-admin@yourdomain.com"
-	//     }
+	//       // Other staging-specific variables
+	//     },
+	//     "d1_databases": [
+	//       {
+	//         "binding": "DB",
+	//         "database_name": "your-contact-db-staging",
+	//         "database_id": "YOUR_STAGING_D1_ID_HERE"
+	//       }
+	//     ]
+	//   },
+	//   "development": { // Example for local development
+	//      "name": "your-contact-form-dev",
+	//      "d1_databases": [ /* ... development D1 config ... */ ],
+	//      "vars": { "ENVIRONMENT": "development", /* ... other dev vars ... */ }
 	//   }
 	// }
+	// To use these environments, you would run wrangler with the --env flag:
+	// e.g., wrangler deploy --env staging
+	// Or, for local development, you can copy the "development" block's content
+	// into the main part of your actual wrangler.jsonc.
 }
