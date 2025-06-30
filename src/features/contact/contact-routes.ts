@@ -4,6 +4,7 @@
  */
 
 import type { FormSubmission, CloudflareAccessUser, Env } from '../../types/index.js';
+import type { CONFIG } from '../../config/index.js';
 
 // Import utilities
 import { extractUserFromAccessToken, validateAdminAccess } from '../../utils/auth.js';
@@ -23,14 +24,14 @@ export class ContactRoutes {
   /**
    * Handle contact form display
    */
-  static async handleContactForm(request: Request, env: Env, corsHeaders: Record<string, string>, config: any): Promise<Response> {
+  static async handleContactForm(request: Request, env: Env, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response> {
     return createHtmlResponse(getContactFormHTML(config), corsHeaders);
   }
 
   /**
    * Handle form submission
    */
-  static async handleSubmit(request: Request, env: Env, corsHeaders: Record<string, string>, config: any): Promise<Response> {
+  static async handleSubmit(request: Request, env: Env, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response> {
     try {
       const formData = await request.formData();
       const parsedData = parseFormData(formData);
@@ -79,7 +80,7 @@ export class ContactRoutes {
   /**
    * Handle admin panel display
    */
-  static async handleAdmin(request: Request, env: Env, corsHeaders: Record<string, string>, config: any): Promise<Response> {
+  static async handleAdmin(request: Request, env: Env, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response> {
     try {
       // Extract user identity from Cloudflare Access token
       const user = await extractUserFromAccessToken(request, config.security.cloudflareAccessTeamName);
@@ -110,7 +111,7 @@ export class ContactRoutes {
   /**
    * Handle submission status updates
    */
-  static async handleStatusUpdate(request: Request, env: Env, corsHeaders: Record<string, string>, config: any): Promise<Response> {
+  static async handleStatusUpdate(request: Request, env: Env, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response> {
     try {
       // Extract user identity from Cloudflare Access token
       const user = await extractUserFromAccessToken(request, config.security.cloudflareAccessTeamName);
@@ -160,7 +161,7 @@ export class ContactRoutes {
   /**
    * Route handler for contact-related paths
    */
-  static async handleRoute(pathname: string, request: Request, env: Env, corsHeaders: Record<string, string>, config: any): Promise<Response | null> {
+  static async handleRoute(pathname: string, request: Request, env: Env, corsHeaders: Record<string, string>, config: CONFIG): Promise<Response | null> {
     const method = request.method;
 
     // Contact form routes

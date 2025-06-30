@@ -3,8 +3,9 @@
  */
 
 import { generateThemeCSS } from '../styles/theme.js';
+import type { CONFIG } from '../config/index.js'; // Import CONFIG
 
-export function getSuccessHTML(config: any): string {
+export function getSuccessHTML(config: CONFIG): string {
 	return `<!DOCTYPE html>
 <html lang="en">
 <head>

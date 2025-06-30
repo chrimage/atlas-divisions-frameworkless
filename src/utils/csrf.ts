@@ -2,6 +2,8 @@
  * CSRF Protection Utilities
  */
 
+import type { CloudflareAccessUser } from '../types/index.js'; // Import CloudflareAccessUser
+
 /**
  * Generate a CSRF token using crypto.randomUUID()
  */
@@ -78,10 +80,10 @@ export function removeCSRFToken(sessionId: string): void {
 
 /**
  * Extract session ID from user object (for CSRF token storage)
- * @param user - CloudflareAccessUser object
+ * @param user - CloudflareAccessUser object or null
  * @returns string session identifier
  */
-export function getSessionId(user: any): string {
+export function getSessionId(user: CloudflareAccessUser | null): string {
   // Use email + sub for a more unique session identifier
   return user ? `${user.email}_${user.sub || ''}` : 'anonymous';
 }

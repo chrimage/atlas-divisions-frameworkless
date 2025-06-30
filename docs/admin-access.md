@@ -30,45 +30,44 @@ This system supports two authentication methods for the admin panel:
 4. Complete authentication
 5. Access granted to admin panel
 
-### Configuration in Code
+### Configuration in Code & Environment
 
-In `src/config.ts`, ensure:
-```typescript
-features: {
-  enableCloudflareAccess: true,
-  enableAdminAuth: true
-}
-```
+1.  **Enable Cloudflare Access in `src/config/contact.ts` (or main `src/config.ts`):**
+    ```typescript
+    // In CONTACT_CONFIG or feature flags section of main CONFIG
+    contactFeatures: { // or 'features' in older config structure
+      enableCloudflareAccess: true,
+      enableAdminAuth: true // Should also be true to enable any admin auth check
+    }
+    ```
+2.  **Set `CLOUDFLARE_ACCESS_TEAM_NAME` Environment Variable:**
+    *   Set this environment variable (e.g., in `wrangler.jsonc` for deployments or `.env`/`.dev.vars` for local development) to your Cloudflare Access team name (e.g., "your-team" if your Access URL is `your-team.cloudflareaccess.com`). This is crucial for JWT signature validation.
 
 ## Option 2: Basic Email Validation
 
-### Configuration
+### Configuration in Code & Environment
 
-In `src/config.ts`, update:
-```typescript
-security: {
-  allowedAdminEmails: [
-    "admin@yourdomain.com",
-    "manager@yourdomain.com"
-    // Add more admin emails as needed
-  ]
-},
-features: {
-  enableCloudflareAccess: false,
-  enableAdminAuth: true
-}
-```
+1.  **Disable Cloudflare Access and Enable Basic Auth in `src/config/contact.ts` (or main `src/config.ts`):**
+    ```typescript
+    // In CONTACT_CONFIG or feature flags section of main CONFIG
+    contactFeatures: { // or 'features' in older config structure
+      enableCloudflareAccess: false,
+      enableAdminAuth: true
+    }
+    ```
+2.  **Set `ALLOWED_ADMIN_EMAILS` Environment Variable:**
+    *   Set this environment variable to a comma-separated list of email addresses that are allowed admin access (e.g., `"admin1@example.com,superadmin@example.com"`).
 
 ### How It Works
 
-- System checks the JWT token from Cloudflare for user email
-- If email is in the `allowedAdminEmails` list, access is granted
-- If not, access is denied
+- System checks the JWT token from Cloudflare for the user's email (this JWT is usually present if the user has authenticated with Cloudflare for any application on the domain).
+- If the user's email is in the list provided by the `ALLOWED_ADMIN_EMAILS` environment variable, access is granted.
+- If not, access is denied.
 
 ### Adding New Admin Users
 
-1. Update `allowedAdminEmails` array in `src/config.ts`
-2. Redeploy: `npm run deploy`
+1. Update the `ALLOWED_ADMIN_EMAILS` environment variable (e.g., in `wrangler.jsonc` or via `wrangler secret put ALLOWED_ADMIN_EMAILS`).
+2. Redeploy the worker if you changed `wrangler.jsonc` vars. Secrets update automatically.
 
 ## Option 3: Disable Authentication (Not Recommended)
 

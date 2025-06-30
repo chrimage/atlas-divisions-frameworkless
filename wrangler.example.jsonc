@@ -58,6 +58,13 @@
 		// TODO: Add your Mailgun private API key
 		// SECURITY: This is sensitive - never commit the real value
 		"MG_API_KEY": "key-your-mailgun-api-key-here",
+
+		// TODO: Comma-separated list of admin email addresses
+		// Example: "admin1@example.com,admin2@example.com"
+		"ALLOWED_ADMIN_EMAILS": "",
+
+		// TODO: Your Cloudflare Access team name (e.g., "your-team" from "your-team.cloudflareaccess.com")
+		"CLOUDFLARE_ACCESS_TEAM_NAME": "",
 		
 		"ENVIRONMENT": "production"
 	}

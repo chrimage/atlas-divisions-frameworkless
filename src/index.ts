@@ -22,10 +22,12 @@ import { WebsiteRoutes } from './features/website/website-routes.js';
 export default {
 	async fetch(request: Request, env: Env): Promise<Response> {
 		const url = new URL(request.url);
-		const config = getConfig(env.ENVIRONMENT);
+		// Pass the full env object to getConfig to access environment variables
+		const config = getConfig(env.ENVIRONMENT, env);
 		
 		// Validate configuration on startup
-		const configErrors = validateConfig(config);
+		// Pass env to validateConfig as well, as it might need to check raw env vars
+		const configErrors = validateConfig(config, env);
 		if (configErrors.length > 0) {
 			console.warn('Configuration warnings:', configErrors);
 		}

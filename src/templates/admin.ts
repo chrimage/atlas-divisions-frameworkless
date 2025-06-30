@@ -4,6 +4,8 @@
 
 import { generateThemeCSS } from '../styles/theme.js';
 import type { CloudflareAccessUser } from '../types/index.js';
+import type { DatabaseSubmission } from '../utils/database.js'; // Import DatabaseSubmission
+import type { CONFIG } from '../config/index.js'; // Import CONFIG
 import { generateCSRFToken, storeCSRFToken, getSessionId } from '../utils/csrf.js';
 
 /**
@@ -18,7 +20,7 @@ function escapeHtml(unsafe: string): string {
     .replace(/'/g, "&#039;");
 }
 
-export function getAdminHTML(submissions: any[], user: CloudflareAccessUser | null = null, config: any): string {
+export function getAdminHTML(submissions: DatabaseSubmission[], user: CloudflareAccessUser | null = null, config: CONFIG): string {
 	// Generate CSRF token for this session
 	const csrfToken = generateCSRFToken();
 	const sessionId = getSessionId(user);
@@ -421,17 +423,7 @@ export function getAdminHTML(submissions: any[], user: CloudflareAccessUser | nu
 		</div>
 	` : ''}
 	
-	<script>
-		// Handle auto-submit for status changes
-		document.addEventListener('DOMContentLoaded', function() {
-			const selects = document.querySelectorAll('[data-auto-submit="true"]');
-			selects.forEach(function(select) {
-				select.addEventListener('change', function() {
-					this.form.submit();
-				});
-			});
-		});
-	</script>
+	<script src="/js/admin.js" defer></script>
 </body>
 </html>`;
 }
