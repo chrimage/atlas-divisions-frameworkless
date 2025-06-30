@@ -30,3 +30,7 @@ export interface Env {
 	ADMIN_EMAIL: string;
 	ENVIRONMENT?: string;
 }
+
+// Re-export ExecutionContext for clarity, though it's often globally available
+// in Cloudflare Workers projects via @cloudflare/workers-types.
+export type { ExecutionContext } from '@cloudflare/workers-types';
