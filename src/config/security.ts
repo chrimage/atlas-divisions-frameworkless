@@ -7,9 +7,10 @@ export const SECURITY_CONFIG = {
   // Security Configuration
   security: {
     // Email addresses allowed to access admin panel (if not using Cloudflare Access)
+    // TODO: Configure with your actual admin emails
     allowedAdminEmails: [
-      "harley@atlasdivisions.com",
-      "admin@atlasdivisions.com"
+      "admin@yourdomain.com",
+      "owner@yourdomain.com"
       // Add more admin emails as needed
     ],
     
@@ -29,11 +30,11 @@ export const SECURITY_CONFIG = {
     contentSecurityPolicy: {
       directives: {
         'default-src': ["'self'"],
-        'script-src': ["'self'", "'unsafe-inline'"], // TODO: Remove 'unsafe-inline' and use nonce
+        'script-src': ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com"], // TODO: Remove 'unsafe-inline' and use nonce
         'style-src': ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         'font-src': ["'self'", "https://fonts.gstatic.com"],
         'img-src': ["'self'", "data:", "https:"],
-        'connect-src': ["'self'"],
+        'connect-src': ["'self'", "https://raw.githubusercontent.com"],
         'frame-ancestors': ["'none'"],
         'form-action': ["'self'"],
         'base-uri': ["'self'"],
