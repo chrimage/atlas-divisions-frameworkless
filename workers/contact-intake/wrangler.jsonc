@@ -1,0 +1,71 @@
+/**
+ * TEMPLATE CONFIGURATION FILE
+ *
+ * This file contains example/template values.
+ * Copy wrangler.example.jsonc to wrangler.jsonc and update with your values.
+ *
+ * For more details: https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	
+	// TODO: Update these values for your deployment
+	"name": "firebird-intake",
+	"main": "src/index.ts",
+	"account_id": "289b455192a9eaf0a0d035e2d342944a",
+	
+	"compatibility_date": "2025-06-28",
+	"compatibility_flags": [
+		"global_fetch_strictly_public",
+		"nodejs_compat"
+	],
+	"observability": {
+		"enabled": true
+	},
+	
+	"d1_databases": [
+		{
+"binding": "DB",
+"database_name": "firebird-intake-db",
+"database_id": "2d95737f-6c51-47a6-a53c-f6d23fd1f188"
+		}
+	],
+	
+  "vars": {
+    "FROM_EMAIL": "notify@atlasdivisions.com",
+    "ADMIN_EMAIL": "Harley@atlasdivisions.com",
+    "ENVIRONMENT": "production",
+    "MG_DOMAIN": "mg.atlasdivisions.com"
+  },
+	
+	"send_email": [
+		{
+			"name": "EMAIL_SENDER",
+"allowed_destination_addresses": [
+  "Harley@atlasdivisions.com"
+]
+		}
+	]
+	
+	/**
+	 * Optional Advanced Configuration
+	 */
+	
+	// Smart Placement (recommended for global performance)
+	// "placement": { "mode": "smart" },
+	
+	// Custom Domain (set up in Cloudflare Dashboard first)
+	// "routes": [
+	//   { "pattern": "contact.yourdomain.com/*", "custom_domain": true }
+	// ],
+	
+	// Environment-specific variables
+	// "env": {
+	//   "staging": {
+	//     "vars": {
+	//       "ENVIRONMENT": "staging",
+	//       "ADMIN_EMAIL": "staging-admin@yourdomain.com"
+	//     }
+	//   }
+	// }
+}
