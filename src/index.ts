@@ -16,6 +16,7 @@ import { sendAdminNotification, shouldSendEmail, logEmailStatus } from './utils/
 import { validateFormSubmission, parseFormData, createFormSubmission } from './utils/validation.js';
 import { saveSubmission, getAllSubmissions, updateSubmissionStatus } from './utils/database.js';
 import { getCorsHeaders, handlePreflightRequest, createHtmlResponse, createErrorResponse, createRedirectResponse } from './utils/cors.js';
+import { validateCSRFToken, getSessionId } from './utils/csrf.js';
 
 // Import templates
 import { getHomepageHTML } from './templates/homepage.js';
@@ -130,7 +131,7 @@ async function handleSubmit(request: Request, env: Env, corsHeaders: Record<stri
 async function handleAdmin(request: Request, env: Env, corsHeaders: Record<string, string>, config: typeof CONFIG) {
 	try {
 		// Extract user identity from Cloudflare Access token
-		const user = extractUserFromAccessToken(request);
+		const user = await extractUserFromAccessToken(request, config.security.cloudflareAccessTeamName);
 		
 		// Validate admin access
 		if (!validateAdminAccess(user, config)) {
@@ -158,19 +159,29 @@ async function handleAdmin(request: Request, env: Env, corsHeaders: Record<strin
 async function handleStatusUpdate(request: Request, env: Env, corsHeaders: Record<string, string>, config: typeof CONFIG) {
 	try {
 		// Extract user identity from Cloudflare Access token
-		const user = extractUserFromAccessToken(request);
+		const user = await extractUserFromAccessToken(request, config.security.cloudflareAccessTeamName);
 		
 		if (!user) {
-			console.warn('Status update without authentication');
-			// Still allow the update for now - but should be validated in production
+			return createErrorResponse('Unauthorized - Admin access required', corsHeaders, 401);
 		}
 		
 		const formData = await request.formData();
 		const id = formData.get('id')?.toString();
 		const status = formData.get('status')?.toString();
+		const csrfToken = formData.get('csrf_token')?.toString();
 
 		if (!id || !status) {
 			return createErrorResponse('Missing ID or status', corsHeaders, 400);
+		}
+		
+		// Validate CSRF token
+		if (!csrfToken) {
+			return createErrorResponse('Missing CSRF token', corsHeaders, 400);
+		}
+		
+		const sessionId = getSessionId(user);
+		if (!validateCSRFToken(sessionId, csrfToken)) {
+			return createErrorResponse('Invalid CSRF token', corsHeaders, 403);
 		}
 
 		// Validate status values using imported validation

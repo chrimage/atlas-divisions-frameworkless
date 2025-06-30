@@ -4,6 +4,18 @@
 
 import { generateThemeCSS } from '../styles/theme.js';
 
+/**
+ * HTML escape utility to prevent XSS attacks
+ */
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
 export function getErrorHTML(error: string, config: any): string {
 	return `<!DOCTYPE html>
 <html lang="en">
@@ -142,7 +154,7 @@ export function getErrorHTML(error: string, config: any): string {
 		<h1>Oops! Something went wrong</h1>
 		
 		<div class="error-message">
-			<p>${error}</p>
+			<p>${escapeHtml(error)}</p>
 		</div>
 		
 		<a href="/">← Try Again</a>
