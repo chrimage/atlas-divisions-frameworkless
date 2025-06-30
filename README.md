@@ -130,57 +130,55 @@ Based on the design specification, the site uses:
 - Responsive grid layouts
 - Glass-morphism effects
 
-## Setup
+## Setup & Deployment
 
-1. **Clone and install dependencies:**
-   ```bash
-   git clone <repository-url>
-   cd atlas-divisions-rebuild
-   npm install
-   ```
+Setting up and deploying this project involves configuring Cloudflare services (Workers, D1) and managing application secrets securely. We've streamlined this process to be as straightforward and secure as possible.
 
-2. **Configure Cloudflare Workers account:**
-   ```bash
-   npm install -g wrangler
-   wrangler login
-   ```
+**Key Principles of the New Setup:**
+- **Secure Secret Management:** Production secrets (API keys, sensitive IDs) are managed using `wrangler secret put`.
+- **Local Development Ease:** Local secrets are managed via a `.dev.vars` file (which is gitignored).
+- **Clear Environment Separation:** Distinct steps and configurations for local development versus production.
 
-3. **Set up environment configuration:**
-   ```bash
-   # Copy template configuration files
-   cp wrangler.example.jsonc wrangler.jsonc
-   cp .env.example .env
-   
-   # Update with your actual values
-   # NEVER commit these files to the repository
-   ```
+**Quick Steps:**
 
-4. **Create D1 database and apply schema:**
-   ```bash
-   wrangler d1 create atlas-divisions-contact-db
-   wrangler d1 execute atlas-divisions-contact-db --file=schema.sql
-   ```
+1.  **Clone and Install Dependencies:**
+    ```bash
+    git clone <repository-url>
+    cd <repository-directory> # e.g., atlas-divisions-rebuild
+    npm install
+    npm install -g wrangler # If not already installed
+    ```
 
-5. **Deploy:**
-   ```bash
-   npm run deploy
-   ```
+2.  **Initial Cloudflare Login & Setup:**
+    ```bash
+    wrangler login
+    # Follow instructions in SETUP.md for initial Cloudflare Account ID setup
+    ```
 
-See [SETUP.md](SETUP.md) for detailed instructions and [SECURITY.md](SECURITY.md) for comprehensive security guidelines.
+3.  **Detailed Configuration & Deployment:**
+    For comprehensive instructions on setting up your local environment, D1 databases, Mailgun, production secrets, and deploying, please refer to the **[SETUP.md](SETUP.md)** guide. It covers:
+    - Local development server (`npm run dev`)
+    - Production deployment (`npm run deploy`)
+    - Database schema migration
+    - Configuring Cloudflare Access for the admin panel
 
-## 🔐 Security Notes
+See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for verifying your production deployment after following `SETUP.md`.
+See [SECURITY.md](SECURITY.MD) for broader security considerations.
 
-**IMPORTANT:** This repository follows security best practices:
+## 🔐 Simplified & Secure Configuration
 
-- ✅ Production credentials are **never committed** to the repository
-- ✅ Template files (`wrangler.example.jsonc`, `.env.example`) show the required format
-- ✅ Actual configuration files (`wrangler.jsonc`, `.env`) are gitignored
-- ✅ Admin access is secured via Cloudflare Access or email verification
+This project emphasizes security and ease of maintenance:
 
-**Files that contain secrets and should NOT be committed:**
-- `wrangler.jsonc` (contains account IDs, database IDs)
-- `.env` (contains API keys and credentials)
-- Any `wrangler.*.jsonc` files with actual values
+- ✅ **Production secrets are managed via `wrangler secret put`**, never directly in `wrangler.jsonc` or committed to Git.
+- ✅ **Local development uses `.dev.vars`** for easy secret management without risk of committing them.
+- ✅ `wrangler.example.jsonc` serves as a template, guiding towards secure practices.
+- ✅ `wrangler.jsonc` (if used for anything beyond basic structure) and `.dev.vars` are included in `.gitignore`.
+- ✅ Admin access is secured (Cloudflare Access recommended).
+
+**Files containing secrets that MUST NOT be committed:**
+- Your actual `wrangler.jsonc` if you ever put temporary secrets in it for local testing (prefer `.dev.vars`).
+- Your `.dev.vars` file.
+- Any `.env` files if you choose to use them for local shell environment variables (though `SETUP.md` guides away from this for worker variables).
 
 ## License
 

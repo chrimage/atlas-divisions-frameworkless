@@ -1,217 +1,126 @@
-# Deployment Checklist ✅
+# Deployment Verification Checklist ✅
 
-Use this checklist to ensure your contact form deployment is properly configured and ready for production.
+This checklist is for verifying a production deployment AFTER following the instructions in `SETUP.md`.
 
-## 📋 Pre-Deployment Setup
+## 📋 Pre-Requisites Verification (from `SETUP.md`)
 
-### ✅ Cloudflare Account & Domain Setup
-- [ ] Cloudflare account created
-- [ ] Domain added to Cloudflare (nameservers pointing to Cloudflare)
-- [ ] Domain is active (not just DNS-only)
+### ✅ Cloudflare Account & Domain
+- [ ] Cloudflare account is active.
+- [ ] Domain is registered with Cloudflare and active.
+- [ ] `CLOUDFLARE_ACCOUNT_ID` environment variable is set in the deployment environment (e.g., CI/CD).
 
-### ✅ Email Routing Configuration
-- [ ] Email Routing enabled for your domain
-- [ ] MX records automatically configured by Cloudflare
-- [ ] SPF record added: `v=spf1 include:_spf.mx.cloudflare.net ~all`
-- [ ] Admin destination email addresses added and **verified**
-- [ ] Test email sent to verify delivery
+### ✅ Mailgun Setup
+- [ ] Mailgun account is active.
+- [ ] Sending domain is configured and verified in Mailgun (with correct DNS records like SPF, DKIM).
+- [ ] Mailgun Domain and API Key are noted for secret configuration.
 
-### ✅ Project Setup
-- [ ] Repository cloned
-- [ ] `npm install` completed successfully
-- [ ] Wrangler CLI installed globally: `npm install -g wrangler`
-- [ ] Logged into Cloudflare: `wrangler login`
+### ✅ Project Code
+- [ ] Latest stable version of the project code is checked out.
+- [ ] `npm install` has been run successfully.
+- [ ] Wrangler CLI is installed and logged in (`wrangler login`).
 
-## ⚙️ Configuration
+## ⚙️ Configuration Verification (Production)
 
-### ✅ Database Setup
-- [ ] D1 database created: `wrangler d1 create your-contact-db`
-- [ ] Database ID copied from output
-- [ ] Schema applied locally: `wrangler d1 execute your-contact-db --file=schema.sql`
+### ✅ D1 Database (Production)
+- [ ] Production D1 database created (`wrangler d1 create your-contact-db-prod`).
+- [ ] Production D1 `database_id` is correctly configured in the `wrangler.jsonc` (or equivalent environment-specific config) used for deployment.
+- [ ] Database schema applied to production D1 (`wrangler d1 execute your-contact-db-prod --file=schema.sql --remote`).
 
-### ✅ 🔐 Secure Configuration Setup
-- [ ] **SECURITY CHECK:** Verified `.gitignore` includes production config files
-- [ ] Template files copied securely:
-  - [ ] `cp wrangler.example.jsonc wrangler.jsonc`
-  - [ ] `cp .env.example .env`
-- [ ] **SECURITY CHECK:** Confirmed `wrangler.jsonc` and `.env` are NOT tracked by git
-- [ ] Worker name updated (no spaces, hyphens/underscores only)
-- [ ] Account ID updated (from `wrangler whoami`)
-- [ ] Database name and ID updated
-- [ ] FROM_EMAIL updated (must be on your Cloudflare domain)
-- [ ] ADMIN_EMAIL updated (must be verified in Email Routing)
-- [ ] `allowed_destination_addresses` updated with verified emails
-- [ ] **SECURITY CHECK:** No production credentials in any committed files
+### ✅ 🔐 Production Secrets in Cloudflare
+- [ ] All required production secrets are set using `wrangler secret put`:
+    - [ ] `FROM_EMAIL` (e.g., `noreply@mg.yourdomain.com`)
+    - [ ] `ADMIN_EMAIL` (notification recipient)
+    - [ ] `MG_DOMAIN` (your Mailgun sending domain)
+    - [ ] `MG_API_KEY` (your Mailgun private API key)
+    - [ ] `ALLOWED_ADMIN_EMAILS` (if using basic auth for admin panel)
+    - [ ] `CLOUDFLARE_ACCESS_TEAM_NAME` (if using Cloudflare Access for admin panel, e.g., "your-team.cloudflareaccess.com")
+    - [ ] `ENVIRONMENT` (set to "production")
+- [ ] **SECURITY CHECK:** No production secrets are present in `wrangler.jsonc`, `.dev.vars`, or any other committed file.
 
-### ✅ Application Configuration
-- [ ] `src/config.ts` updated with your company information
-- [ ] Company name changed from "Your Company Name"
-- [ ] Service types customized for your business
-- [ ] Admin email addresses updated (if not using Cloudflare Access)
-- [ ] Branding/colors customized (optional)
+### ✅ `wrangler.jsonc` (Production Context)
+- [ ] Worker `name` is correct for the production deployment.
+- [ ] `account_id` is correctly set (or `CLOUDFLARE_ACCOUNT_ID` env var is used).
+- [ ] `d1_databases` binding points to the correct production database name and ID.
+- [ ] `compatibility_date` and `compatibility_flags` are appropriate.
 
-## 🔐 Security Configuration
+### ✅ Application Code Configuration (`src/config/`)
+- [ ] Non-sensitive configurations (company name, service types, UI text in `src/config/*.ts`) are correct for production.
+- [ ] `src/config/security.ts` (or equivalent) correctly enables/disables Cloudflare Access (`enableCloudflareAccess`) and basic admin auth (`enableAdminAuth`) as per chosen method.
 
-### ✅ Authentication Method Chosen
+## 🔐 Admin Panel Security Verification
+
+**Choose one path based on `SETUP.md` Part 7, Step 4 or 5:**
 
 **Option A: Cloudflare Access (Recommended)**
-- [ ] Cloudflare Access application created
-- [ ] Application domain set to: `your-worker-name.your-subdomain.workers.dev`
-- [ ] Application path set to: `/admin*`
-- [ ] Access policy created with admin email addresses
-- [ ] Authentication method chosen (Email OTP, Google, etc.)
-- [ ] Config: `enableCloudflareAccess: true`
+- [ ] Cloudflare Access application created for the worker's production URL and `/admin*` path.
+- [ ] Access policy correctly defines who can access (e.g., specific email addresses, groups).
+- [ ] Authentication methods for Access are configured (e.g., Email OTP, Google).
+- [ ] `CLOUDFLARE_ACCESS_TEAM_NAME` secret matches the Cloudflare Access team/auth domain.
+- [ ] `enableCloudflareAccess: true` is set in the worker's code configuration (and deployed).
 
 **Option B: Basic Email Validation**
-- [ ] Admin emails added to `allowedAdminEmails` in config
-- [ ] Config: `enableCloudflareAccess: false, enableAdminAuth: true`
+- [ ] `ALLOWED_ADMIN_EMAILS` secret contains the correct, comma-separated list of admin email addresses.
+- [ ] `enableCloudflareAccess: false` and `enableAdminAuth: true` are set in the worker's code configuration (and deployed).
 
-**Option C: No Authentication (Development Only)**
-- [ ] Config: `enableAdminAuth: false`
-- [ ] ⚠️ **Warning acknowledged**: Admin panel will be publicly accessible
+**Option C: No Authentication (NOT FOR PRODUCTION)**
+- [ ] **WARNING:** This should NOT be the case for a production deployment. Verify `enableAdminAuth: false` is NOT set for production.
 
-## 🚀 Deployment Steps
+## 🚀 Deployment Verification
 
-### ✅ Local Testing
-- [ ] Local development server started: `npm run dev`
-- [ ] Contact form accessible at `http://localhost:8787`
-- [ ] Form submission works (check console for database save)
-- [ ] Admin panel accessible at `http://localhost:8787/admin`
-- [ ] Status updates work in admin panel
-- [ ] Tests pass: `npm test`
+### ✅ Worker Deployment
+- [ ] Worker deployed successfully to production (`npm run deploy` or `wrangler deploy ...`).
+- [ ] No deployment errors in Wrangler output.
+- [ ] Production worker URL is accessible (e.g., `https://your-worker-name.your-account.workers.dev`).
 
-### ✅ Production Deployment
-- [ ] Worker deployed: `npm run deploy`
-- [ ] No deployment errors
-- [ ] Production database schema applied: `wrangler d1 execute your-contact-db --file=schema.sql --remote`
-- [ ] Worker URL accessible: `https://your-worker-name.your-subdomain.workers.dev`
+## 🧪 Post-Deployment Testing (Critical Functionality)
 
-## 🧪 Post-Deployment Testing
+### ✅ Contact Form
+- [ ] Production contact form page loads correctly.
+- [ ] Form submission with valid data results in a success message/page.
+- [ ] Attempted submission with invalid data shows validation errors.
 
-### ✅ Contact Form Testing
-- [ ] Contact form loads properly
-- [ ] All form fields display correctly
-- [ ] Form validation works (try submitting empty form)
-- [ ] Form submission succeeds with valid data
-- [ ] Success page displays after submission
-- [ ] Error handling works (try invalid data)
+### ✅ Email Notification (via Mailgun)
+- [ ] Successful form submission triggers an email to the `ADMIN_EMAIL` secret.
+- [ ] Email is received within a reasonable timeframe (check Mailgun logs if delays).
+- [ ] Email content is correct and well-formatted.
+- [ ] "Reply-to" header in the email is sensible (if configured).
 
-### ✅ Email Notification Testing
-- [ ] Submit test form with real data
-- [ ] Check admin email for notification within 5 minutes
-- [ ] Email contains all form details
-- [ ] Email formatting looks correct
-- [ ] Reply-to address works
+### ✅ Admin Panel Access & Functionality
+- [ ] Admin panel URL (`/admin`) loads.
+- [ ] Authentication flow (Cloudflare Access or basic JWT check) works as configured.
+    - [ ] Unauthorized access attempts are blocked.
+- [ ] New submissions from contact form tests appear in the admin panel.
+- [ ] Status updates for submissions work correctly.
+- [ ] Statistics (if any) display correctly.
 
-### ✅ Admin Panel Testing
-- [ ] Admin panel loads: `https://your-worker.workers.dev/admin`
-- [ ] Authentication flow works (if enabled)
-- [ ] Submissions display correctly
-- [ ] Status updates work (dropdown changes)
-- [ ] Statistics display correctly
-- [ ] User information shows (if using Cloudflare Access)
-
-### ✅ Security Testing
-- [ ] **CRITICAL:** Verify no production secrets committed to repository
+### ✅ Critical Security Checks
+- [ ] **CRITICAL:** Verify no production secrets have been committed to the repository.
   ```bash
-  git log --oneline --grep="secret\|password\|key\|token" --all
-  git log --oneline -S "account_id" --all
-  git log --oneline -S "database_id" --all
+  # Run these commands locally on your checked-out code
+  git log --oneline --grep="secret\|password\|key\|token\|MG_API_KEY\|ACCOUNT_ID" --all
+  git log --oneline -S "mg.yourdomain.com" --all # Replace with your actual MG domain
+  # Add other sensitive placeholder checks if necessary
   ```
-- [ ] **CRITICAL:** Confirm `wrangler.jsonc` and `.env` are gitignored
+- [ ] **CRITICAL:** Confirm `wrangler.jsonc` (if ever containing temp local secrets), `.env` (if used), and `.dev.vars` are properly gitignored.
   ```bash
-  git status --ignored | grep -E "(wrangler\.jsonc|\.env$)"
+  git status --ignored | grep -E "(wrangler\.jsonc$|\.env$|\.dev\.vars$)"
+  # Ensure these files (if they exist locally with secrets) are listed as ignored.
   ```
-- [ ] Admin panel properly secured (try accessing without auth)
-- [ ] CORS headers work for form submissions
-- [ ] No sensitive information exposed in errors
-- [ ] Database queries use parameterized statements
-- [ ] Configuration files contain only template/example values in repository
-- [ ] All production credentials stored securely (Wrangler secrets or local files)
+- [ ] CORS headers are correctly configured if the form is submitted from a different domain than the worker.
+- [ ] No sensitive information is exposed in public-facing error messages.
 
-## 📊 Monitoring Setup
+## 📊 Monitoring & Logging (Initial Check)
 
 ### ✅ Observability
-- [ ] Cloudflare Analytics enabled in dashboard
-- [ ] Worker logs accessible: `wrangler tail`
-- [ ] Error tracking configured
-- [ ] Performance metrics reviewed
+- [ ] Cloudflare Worker metrics are visible in the Cloudflare dashboard (Analytics & Monitoring -> Workers).
+- [ ] Live logs can be viewed using `wrangler tail --format=pretty` (pointed at the production worker).
 
-### ✅ Alerts (Optional)
-- [ ] Email alerts for high error rates
-- [ ] Performance monitoring
-- [ ] Database quota monitoring
-- [ ] Failed email notifications
-
-## 🔧 Performance Optimization
-
-### ✅ Configuration Review
-- [ ] Smart Placement enabled (optional): `"placement": { "mode": "smart" }`
-- [ ] Email notifications use `ctx.waitUntil()` (non-blocking)
-- [ ] Database queries optimized
-- [ ] CORS headers minimized to required origins
-
-### ✅ Custom Domain (Optional)
-- [ ] Custom domain configured in Cloudflare Dashboard
-- [ ] DNS records pointing to worker
-- [ ] SSL certificate active
-- [ ] Routes updated in wrangler.jsonc
-
-## 📚 Documentation & Handoff
-
-### ✅ Team Documentation
-- [ ] Admin access instructions documented
-- [ ] Emergency contact procedures established
-- [ ] Backup and recovery plans documented
-- [ ] Configuration changes process documented
-
-### ✅ Training & Knowledge Transfer
-- [ ] Team trained on admin panel usage
-- [ ] Troubleshooting procedures shared
-- [ ] Monitoring and alert contacts assigned
-- [ ] Regular maintenance schedule established
-
-## 🎉 Go-Live Checklist
-
-### ✅ Final Verification
-- [ ] All previous checklist items completed
-- [ ] Load testing performed (if expecting high volume)
-- [ ] Backup procedures tested
-- [ ] Emergency contacts notified
-- [ ] Go-live announcement prepared
-
-### ✅ Post Go-Live
-- [ ] Monitor for first 24 hours
-- [ ] Collect user feedback
-- [ ] Document any issues and resolutions
-- [ ] Schedule first maintenance review
+## ✅ Custom Domain (If Applicable)
+- [ ] Custom domain (e.g., `contact.yourdomain.com`) is correctly configured in Cloudflare DNS.
+- [ ] Custom domain route is active in Worker settings (Triggers -> Routes or Custom Domains).
+- [ ] SSL certificate for the custom domain is active.
+- [ ] Worker responds correctly on the custom domain.
 
 ---
 
-## 🆘 Troubleshooting Quick Reference
-
-**Contact form not working:**
-```bash
-wrangler tail --format=pretty
-curl -X POST https://your-worker.workers.dev/submit -F "name=Test" -F "message=Test"
-```
-
-**Database issues:**
-```bash
-wrangler d1 execute your-db --command="SELECT * FROM submissions;" --remote
-wrangler d1 info your-db
-```
-
-**Email not sending:**
-- Verify destination addresses in Cloudflare Email Routing
-- Check FROM_EMAIL matches domain with Email Routing
-- Check worker logs for email errors
-
-**Admin panel access issues:**
-- Verify Cloudflare Access configuration
-- Check JWT token in browser developer tools
-- Verify admin email in allowedAdminEmails list
-
----
-
-**🎊 Congratulations!** Once you've completed this checklist, your contact form and admin panel are ready for production use.
+**🎊 Congratulations!** Completing this checklist significantly increases confidence in your production deployment. Remember to consult `SETUP.md` for detailed instructions on *how* to achieve these states.

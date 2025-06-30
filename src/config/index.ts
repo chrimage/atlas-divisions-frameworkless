@@ -67,6 +67,9 @@ export function getConfig(environment: string = "production", env?: Env): typeof
     if (env.CLOUDFLARE_ACCESS_TEAM_NAME) {
       baseConfig.security.cloudflareAccessTeamName = env.CLOUDFLARE_ACCESS_TEAM_NAME;
     }
+    if (env.CORS_ALLOWED_ORIGINS) {
+      baseConfig.security.cors.allowedOrigins = env.CORS_ALLOWED_ORIGINS.split(',').map(origin => origin.trim()).filter(origin => origin.length > 0);
+    }
     // Populate other env vars like API keys if they were part of the main config structure
     // For example, if MG_API_KEY was in CONFIG.email.mailgunApiKey
     if (env.MG_API_KEY) {
