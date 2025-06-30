@@ -1,28 +1,35 @@
 /**
  * 🔐 TEMPLATE WRANGLER CONFIGURATION
  *
- * SECURITY NOTICE: This is a template file with placeholder values.
+ * SECURITY NOTICE: This is a template file. For production, sensitive values
+ * (API keys, specific IDs) should be set using `wrangler secret put VAR_NAME`
+ * or environment variables, NOT directly in a committed `wrangler.jsonc` file.
  *
- * INSTRUCTIONS:
- * 1. Copy this file to wrangler.jsonc: cp wrangler.example.jsonc wrangler.jsonc
- * 2. Replace ALL values marked with "TODO" with your actual values
- * 3. NEVER commit wrangler.jsonc to the repository (it's gitignored)
+ * INSTRUCTIONS FOR USE:
+ * 1. For local development, you can copy this to `wrangler.jsonc` and fill in values.
+ *    Sensitive runtime variables can be placed in a `.dev.vars` file.
+ * 2. For production, use this as a reference. Most `vars` should be set via secrets.
+ *    `account_id` can be set via the `CLOUDFLARE_ACCOUNT_ID` environment variable.
+ *    `database_id` will need to be in your actual `wrangler.jsonc` or environment-specific config.
+ * 3. Ensure your actual `wrangler.jsonc` (if containing secrets for local dev)
+ *    and `.dev.vars` are in `.gitignore`.
  *
  * For more details: https://developers.cloudflare.com/workers/wrangler/configuration/
+ * For secrets: https://developers.cloudflare.com/workers/wrangler/commands/#secret
  */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	
-	// TODO: Change this to your worker name (letters, numbers, hyphens only)
-	// For example, "my-worker-prod" for production, "my-worker-dev" for development.
+	// Recommended: Set worker name via CLI: `wrangler deploy --name your-worker-name`
+	// Or, define here. Example: "my-worker-prod" for production.
 	"name": "your-contact-form",
 	
 	"main": "src/index.ts",
 	
-	// TODO: Replace with your Cloudflare Account ID
-	// Get this by running: wrangler whoami
-	// SECURITY: This is sensitive - never commit the real value
-	"account_id": "00000000000000000000000000000000",
+	// Recommended: Set via CLOUDFLARE_ACCOUNT_ID environment variable.
+	// Or, uncomment and replace here if preferred for local workflow.
+	// Get by running: `wrangler whoami`
+	// "account_id": "00000000000000000000000000000000",
 	
 	"compatibility_date": "2025-06-28",
 	"compatibility_flags": [
@@ -41,37 +48,40 @@
 			// Consider using different names for different environments,
 			// e.g., "your-contact-db-prod", "your-contact-db-dev".
 			"database_name": "your-contact-db",
-			// TODO: Replace with your D1 database ID. This will be unique per database.
-			// Get this by running: wrangler d1 create <database_name>
-			// SECURITY: This is sensitive - never commit the real value
+			// TODO: Replace with your D1 database ID. This is unique per database.
+			// Get this by running: `wrangler d1 create <database_name>`
+			// This ID needs to be present in your actual `wrangler.jsonc` for the binding to work.
 			"database_id": "00000000-0000-0000-0000-000000000000"
 		}
 	],
 	
 	"vars": {
-		// TODO: Change to your sending email address
-		"FROM_EMAIL": "contact@yourdomain.com",
+		// For local development, values can be in `.dev.vars` (recommended) or here.
+		// For production, ALL THE FOLLOWING VARS should be set using `wrangler secret put VAR_NAME`.
 		
-		// TODO: Change to where you want admin notifications sent
-		"ADMIN_EMAIL": "admin@yourdomain.com",
+		// Example: `wrangler secret put FROM_EMAIL` then enter the value.
+		"FROM_EMAIL": "contact@yourdomain.com", // TODO: Sending email address
 		
-		// TODO: Add your Mailgun domain (e.g., "mg.yourdomain.com")
-		"MG_DOMAIN": "mg.yourdomain.com",
+		// Example: `wrangler secret put ADMIN_EMAIL`
+		"ADMIN_EMAIL": "admin@yourdomain.com", // TODO: Admin notification recipient
 		
-		// TODO: Add your Mailgun private API key
-		// SECURITY: This is sensitive - never commit the real value
-		"MG_API_KEY": "key-your-mailgun-api-key-here",
+		// Example: `wrangler secret put MG_DOMAIN`
+		"MG_DOMAIN": "mg.yourdomain.com",      // TODO: Mailgun domain
 
-		// TODO: Comma-separated list of admin email addresses
-		// Example: "admin1@example.com,admin2@example.com"
-		"ALLOWED_ADMIN_EMAILS": "",
+		// Example: `wrangler secret put MG_API_KEY`
+		"MG_API_KEY": "key-your-mailgun-api-key-here", // TODO: Mailgun API key (HIGHLY SENSITIVE)
 
-		// TODO: Your Cloudflare Access team name (e.g., "your-team" from "your-team.cloudflareaccess.com")
-		"CLOUDFLARE_ACCESS_TEAM_NAME": "",
+		// Example: `wrangler secret put ALLOWED_ADMIN_EMAILS`
+		"ALLOWED_ADMIN_EMAILS": "", // TODO: Comma-separated admin emails for basic auth
 		
-		// TODO: Set to "development" for local/dev, "staging" for staging, or "production" for live.
-		// This can also be managed more robustly using the "env" block below.
-		"ENVIRONMENT": "production"
+		// Example: `wrangler secret put CLOUDFLARE_ACCESS_TEAM_NAME`
+		"CLOUDFLARE_ACCESS_TEAM_NAME": "", // TODO: Cloudflare Access team name (e.g., "your-team")
+
+		// Example: `wrangler secret put CORS_ALLOWED_ORIGINS`
+		"CORS_ALLOWED_ORIGINS": "http://localhost:8787", // TODO: Comma-separated list of allowed origins for CORS. E.g., "https://yourdomain.com,http://localhost:3000"
+
+		// Example: `wrangler secret put ENVIRONMENT`
+		"ENVIRONMENT": "development" // TODO: Set to "production", "staging", or "development"
 	},
 
 	"assets": {
@@ -99,26 +109,39 @@
 	//   "staging": {
 	//     "name": "your-contact-form-staging", // Override the top-level worker name
 	//     "vars": {
+	//       // Staging-specific variables.
+	//       // Sensitive ones should be set via `wrangler secret put VAR_NAME --env staging`
 	//       "ENVIRONMENT": "staging",
 	//       "ADMIN_EMAIL": "staging-admin@yourdomain.com"
-	//       // Other staging-specific variables
 	//     },
 	//     "d1_databases": [
 	//       {
 	//         "binding": "DB",
 	//         "database_name": "your-contact-db-staging",
-	//         "database_id": "YOUR_STAGING_D1_ID_HERE"
+	//         // This still needs to be the actual ID for the staging D1 database.
+	//         "database_id": "00000000-STAGING-D1ID-000000000000"
 	//       }
 	//     ]
 	//   },
-	//   "development": { // Example for local development
-	//      "name": "your-contact-form-dev",
-	//      "d1_databases": [ /* ... development D1 config ... */ ],
-	//      "vars": { "ENVIRONMENT": "development", /* ... other dev vars ... */ }
+	//   "local": { // Example for local development using `wrangler dev --env local`
+	//      "name": "your-contact-form-local",
+	//      // For local, you might have a different D1 database or use .dev.vars primarily.
+	//      "d1_databases": [
+	//          {
+	//              "binding": "DB",
+	//              "database_name": "your-contact-db-local",
+	//              "database_id": "00000000-LOCAL-D1ID-00000000000",
+	//              "preview_database_id": "YOUR_PREVIEW_D1_ID_FOR_LOCAL_DB" // if using preview DBs
+	//          }
+	//      ],
+	//      "vars": {
+	//          "ENVIRONMENT": "development"
+	//          // Other local vars can go into `.dev.vars` which is automatically picked up by `wrangler dev`
+	//      }
 	//   }
 	// }
-	// To use these environments, you would run wrangler with the --env flag:
-	// e.g., wrangler deploy --env staging
-	// Or, for local development, you can copy the "development" block's content
-	// into the main part of your actual wrangler.jsonc.
+	// To use these environments:
+	// `wrangler deploy --env staging`
+	// `wrangler dev --env local` (or just `wrangler dev` if local is your default setup without specific env block)
+	// Remember, `.dev.vars` file is useful for `wrangler dev` to avoid putting local secrets in `wrangler.jsonc`.
 }
