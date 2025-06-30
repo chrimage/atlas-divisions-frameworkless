@@ -29,6 +29,7 @@ export interface Env {
 	FROM_EMAIL: string;
 	ADMIN_EMAIL: string;
 	ENVIRONMENT?: string;
+	ASSETS: Fetcher;
 }
 
 // Re-export ExecutionContext for clarity, though it's often globally available
