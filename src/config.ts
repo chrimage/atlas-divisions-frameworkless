@@ -184,11 +184,32 @@ export const CONFIG = {
       // Add more admin emails as needed
     ],
     
+    // Cloudflare Access team name for JWT verification
+    // This should be your team name from the Cloudflare Zero Trust dashboard
+    // Example: if your dashboard is at "mycompany.cloudflareaccess.com", use "mycompany"
+    cloudflareAccessTeamName: "", // TODO: Set your Cloudflare Access team name
+    
     // CORS configuration
     cors: {
-      allowedOrigins: ["*"], // In production, specify your domains
+      allowedOrigins: [], // TODO: In production, specify your domains (remove wildcard)
       allowedMethods: ["GET", "POST", "OPTIONS"],
-      allowedHeaders: ["Content-Type"]
+      allowedHeaders: ["Content-Type", "Authorization"]
+    },
+    
+    // Content Security Policy configuration
+    contentSecurityPolicy: {
+      directives: {
+        'default-src': ["'self'"],
+        'script-src': ["'self'", "'unsafe-inline'"], // TODO: Remove 'unsafe-inline' and use nonce
+        'style-src': ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        'font-src': ["'self'", "https://fonts.gstatic.com"],
+        'img-src': ["'self'", "data:", "https:"],
+        'connect-src': ["'self'"],
+        'frame-ancestors': ["'none'"],
+        'form-action': ["'self'"],
+        'base-uri': ["'self'"],
+        'object-src': ["'none'"]
+      }
     }
   },
 
@@ -267,6 +288,19 @@ export function validateConfig(config: typeof CONFIG): string[] {
   
   if (config.security.allowedAdminEmails.some(email => email.includes("yourdomain.com"))) {
     errors.push("Please update admin email addresses in CONFIG.security.allowedAdminEmails");
+  }
+  
+  // Security configuration validation
+  if (config.security.cors.allowedOrigins.length === 0) {
+    errors.push("SECURITY WARNING: Please configure specific allowed origins in CONFIG.security.cors.allowedOrigins (currently allowing all origins)");
+  }
+  
+  if (config.security.cors.allowedOrigins.includes("*" as any)) {
+    errors.push("SECURITY WARNING: Wildcard '*' in CORS origins is not recommended for production");
+  }
+  
+  if (!config.security.cloudflareAccessTeamName) {
+    errors.push("SECURITY WARNING: Please set CONFIG.security.cloudflareAccessTeamName for JWT signature verification");
   }
   
   return errors;
