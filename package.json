@@ -11,11 +11,11 @@
 		"cf-typegen": "wrangler types",
 		"build": "tsc",
 		"deploy": "echo \"Please use deploy:prod or deploy:staging\" && exit 1",
-		"deploy:prod": "wrangler deploy src/index.ts --name your-atlas-contact-prod && npm run db:migrate:prod",
-		"deploy:staging": "wrangler deploy src/index.ts --name your-atlas-contact-staging --env staging && npm run db:migrate:staging",
-		"db:prod:seed": "wrangler d1 execute YOUR_PROD_D1_DB_NAME --file=./schema.sql --remote",
-		"db:staging:seed": "wrangler d1 execute YOUR_STAGING_D1_DB_NAME --file=./schema.sql --remote --env staging",
-		"db:local:seed": "wrangler d1 execute YOUR_LOCAL_D1_DB_NAME --file=./schema.sql --local"
+		"deploy:prod": "wrangler deploy src/index.ts --name your-atlas-contact-prod && npm run db:prod:seed",
+		"deploy:staging": "wrangler deploy src/index.ts --name your-contact-form-staging --env staging && npm run db:staging:seed",
+		"db:prod:seed": "wrangler d1 execute your-contact-db-prod --file=./schema.sql --remote",
+		"db:staging:seed": "wrangler d1 execute your-contact-db-staging --file=./schema.sql --remote --env staging",
+		"db:local:seed": "wrangler d1 execute your-contact-db-dev --file=./schema.sql --local"
 	},
 	"dependencies": {
 		"mimetext": "^3.0.27",
