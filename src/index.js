@@ -166,11 +166,26 @@ tr:hover{background:rgba(212,175,55,0.05);}
 .empty-state h3{color:#d4af37;margin-bottom:1rem;}
 .empty-state a{color:#008080;text-decoration:none;}
 .empty-state a:hover{text-decoration:underline;}
+.message-expand-btn{background:#008080;color:white;border:none;padding:0.25rem 0.5rem;border-radius:4px;cursor:pointer;font-size:0.75rem;margin-left:0.5rem;}
+.message-expand-btn:hover{background:#006666;}
+.modal{display:none;position:fixed;z-index:1000;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.8);backdrop-filter:blur(5px);}
+.modal-content{background:rgba(26,26,26,0.98);margin:5% auto;padding:2rem;border:1px solid rgba(212,175,55,0.3);border-radius:12px;width:90%;max-width:700px;max-height:80vh;overflow-y:auto;position:relative;}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;border-bottom:1px solid rgba(212,175,55,0.2);padding-bottom:1rem;}
+.modal-title{color:#d4af37;font-size:1.25rem;margin:0;}
+.modal-close{background:none;border:none;color:#b8b8b8;font-size:1.5rem;cursor:pointer;padding:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;}
+.modal-close:hover{color:#d4af37;}
+.modal-body{color:#fff;line-height:1.6;}
+.submission-details{display:grid;gap:1rem;margin-bottom:1.5rem;}
+.detail-item{background:rgba(212,175,55,0.05);padding:1rem;border-radius:8px;border-left:3px solid #d4af37;}
+.detail-label{font-weight:600;color:#d4af37;margin-bottom:0.5rem;}
+.detail-value{color:#fff;word-wrap:break-word;}
+.message-content{background:rgba(0,128,128,0.1);padding:1.5rem;border-radius:8px;border:1px solid rgba(0,128,128,0.2);white-space:pre-wrap;word-wrap:break-word;line-height:1.6;}
 @media (max-width: 768px) {
   .stats{flex-direction:column;}
   .stat-card{min-width:auto;}
   th,td{padding:0.5rem;font-size:0.875rem;}
   .message-cell{max-width:120px;}
+  .modal-content{margin:2% auto;width:95%;padding:1rem;}
 }
 </style></head><body>
 <div class="container">
@@ -213,8 +228,9 @@ ${submissions.map(sub => `
 <td><a href="mailto:${escapeHtml(sub.email || '')}" class="email">${sub.email ? escapeHtml(sub.email) : '<span class="no-data">N/A</span>'}</a></td>
 <td class="phone-cell">${sub.phone ? escapeHtml(sub.phone) : '<span class="no-data">N/A</span>'}</td>
 <td>${escapeHtml(sub.service_type)}</td>
-<td class="message-cell" title="${escapeHtml(sub.message)}">
+<td class="message-cell">
 <div class="message-preview">${escapeHtml(sub.message.substring(0, 50))}${sub.message.length > 50 ? '...' : ''}</div>
+${sub.message.length > 50 ? `<button class="message-expand-btn" onclick="showMessageModal('${sub.id}')">Read More</button>` : ''}
 </td>
 <td><span class="status status-${sub.status || 'new'}">${(sub.status || 'new').replace('_', ' ')}</span></td>
 <td>
@@ -234,6 +250,92 @@ ${submissions.map(sub => `
 </table>
 </div>
 `}
+
+<!-- Message Detail Modal -->
+<div id="messageModal" class="modal">
+<div class="modal-content">
+<div class="modal-header">
+<h3 class="modal-title">Submission Details</h3>
+<button class="modal-close" onclick="closeMessageModal()">&times;</button>
+</div>
+<div class="modal-body">
+<div class="submission-details">
+<div class="detail-item">
+<div class="detail-label">From:</div>
+<div class="detail-value" id="modal-name"></div>
+</div>
+<div class="detail-item">
+<div class="detail-label">Email:</div>
+<div class="detail-value" id="modal-email"></div>
+</div>
+<div class="detail-item">
+<div class="detail-label">Phone:</div>
+<div class="detail-value" id="modal-phone"></div>
+</div>
+<div class="detail-item">
+<div class="detail-label">Service Type:</div>
+<div class="detail-value" id="modal-service"></div>
+</div>
+<div class="detail-item">
+<div class="detail-label">Date:</div>
+<div class="detail-value" id="modal-date"></div>
+</div>
+</div>
+<div class="detail-item">
+<div class="detail-label">Message:</div>
+<div class="message-content" id="modal-message"></div>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+// Store submission data for modal
+const submissions = ${JSON.stringify(submissions.map(sub => ({
+  id: sub.id,
+  name: sub.name,
+  email: sub.email || 'N/A',
+  phone: sub.phone || 'N/A', 
+  service_type: sub.service_type,
+  message: sub.message,
+  created_at: sub.created_at
+})))};
+
+function showMessageModal(submissionId) {
+  const submission = submissions.find(s => s.id === submissionId);
+  if (!submission) return;
+  
+  document.getElementById('modal-name').textContent = submission.name;
+  document.getElementById('modal-email').textContent = submission.email;
+  document.getElementById('modal-phone').textContent = submission.phone;
+  document.getElementById('modal-service').textContent = submission.service_type;
+  document.getElementById('modal-date').textContent = new Date(submission.created_at).toLocaleDateString();
+  document.getElementById('modal-message').textContent = submission.message;
+  
+  document.getElementById('messageModal').style.display = 'block';
+  document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+function closeMessageModal() {
+  document.getElementById('messageModal').style.display = 'none';
+  document.body.style.overflow = 'auto';
+}
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  const modal = document.getElementById('messageModal');
+  if (event.target === modal) {
+    closeMessageModal();
+  }
+}
+
+// Close modal with escape key
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeMessageModal();
+  }
+});
+</script>
 </div></body></html>`;
 
 export default {
