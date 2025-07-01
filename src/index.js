@@ -116,6 +116,16 @@ h1{color:#d4af37;margin-bottom:1rem;}
 <a href="/" class="btn">← Back to Homepage</a>
 </div></body></html>`;
 
+// HTML escaping utility for security
+function escapeHtml(unsafe) {
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
 // Enhanced admin panel with proper status handling and message truncation
 const ADMIN_HTML = (submissions, user) => `<!DOCTYPE html>
 <html><head><meta charset="UTF-8"><title>Atlas Divisions - Admin</title>
@@ -165,7 +175,7 @@ tr:hover{background:rgba(212,175,55,0.05);}
 </style></head><body>
 <div class="container">
 <div class="back"><a href="/" class="btn">← Back to Homepage</a></div>
-<div class="user-info">👤 Logged in as: ${user.name} (${user.email})</div>
+<div class="user-info">👤 Logged in as: ${escapeHtml(user.name)} (${escapeHtml(user.email)})</div>
 <h1>📋 Contact Submissions</h1>
 <div class="stats">
 <div class="stat-card">
@@ -199,12 +209,12 @@ ${submissions.length === 0 ? `
 ${submissions.map(sub => `
 <tr>
 <td>${new Date(sub.created_at).toLocaleDateString()}</td>
-<td>${sub.name}</td>
-<td><a href="mailto:${sub.email || ''}" class="email">${sub.email || '<span class="no-data">N/A</span>'}</a></td>
-<td class="phone-cell">${sub.phone || '<span class="no-data">N/A</span>'}</td>
-<td>${sub.service_type}</td>
-<td class="message-cell" title="${sub.message}">
-<div class="message-preview">${sub.message.substring(0, 50)}${sub.message.length > 50 ? '...' : ''}</div>
+<td>${escapeHtml(sub.name)}</td>
+<td><a href="mailto:${escapeHtml(sub.email || '')}" class="email">${sub.email ? escapeHtml(sub.email) : '<span class="no-data">N/A</span>'}</a></td>
+<td class="phone-cell">${sub.phone ? escapeHtml(sub.phone) : '<span class="no-data">N/A</span>'}</td>
+<td>${escapeHtml(sub.service_type)}</td>
+<td class="message-cell" title="${escapeHtml(sub.message)}">
+<div class="message-preview">${escapeHtml(sub.message.substring(0, 50))}${sub.message.length > 50 ? '...' : ''}</div>
 </td>
 <td><span class="status status-${sub.status || 'new'}">${(sub.status || 'new').replace('_', ' ')}</span></td>
 <td>
@@ -244,7 +254,12 @@ export default {
                 if (!name || !service_type || !message) {
                     return new Response('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Error</title></head><body><h1>Error: Missing required fields</h1><a href="/">Go back</a></body></html>', {
                         status: 400,
-                        headers: { 'Content-Type': 'text/html; charset=utf-8' }
+                        headers: { 
+                            'Content-Type': 'text/html; charset=utf-8',
+                            'X-Frame-Options': 'DENY',
+                            'X-Content-Type-Options': 'nosniff',
+                            'X-XSS-Protection': '1; mode=block'
+                        }
                     });
                 }
                 
@@ -272,7 +287,12 @@ export default {
                 await sendAdminNotification(env, submission);
                 
                 return new Response(SUCCESS_HTML, { 
-                    headers: { 'Content-Type': 'text/html; charset=utf-8' } 
+                    headers: { 
+                        'Content-Type': 'text/html; charset=utf-8',
+                        'X-Frame-Options': 'DENY',
+                        'X-Content-Type-Options': 'nosniff',
+                        'X-XSS-Protection': '1; mode=block'
+                    } 
                 });
             }
             
@@ -294,7 +314,12 @@ export default {
                         </div></body></html>
                     `, { 
                         status: 401,
-                        headers: { 'Content-Type': 'text/html; charset=utf-8' } 
+                        headers: { 
+                            'Content-Type': 'text/html; charset=utf-8',
+                            'X-Frame-Options': 'DENY',
+                            'X-Content-Type-Options': 'nosniff',
+                            'X-XSS-Protection': '1; mode=block'
+                        } 
                     });
                 }
                 
@@ -303,7 +328,12 @@ export default {
                 `).all();
                 
                 return new Response(ADMIN_HTML(results, user), { 
-                    headers: { 'Content-Type': 'text/html; charset=utf-8' } 
+                    headers: { 
+                        'Content-Type': 'text/html; charset=utf-8',
+                        'X-Frame-Options': 'DENY',
+                        'X-Content-Type-Options': 'nosniff',
+                        'X-XSS-Protection': '1; mode=block'
+                    } 
                 });
             }
             
