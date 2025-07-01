@@ -5,15 +5,40 @@
 import type { CONFIG } from '../config.js';
 
 /**
- * Generate CORS headers from configuration
+ * Generate Content Security Policy header value
  * @param config - Application configuration
- * @returns CORS headers object
+ * @returns CSP header value
+ */
+function generateCSPHeader(config: typeof CONFIG): string {
+  const directives = Object.entries(config.security.contentSecurityPolicy.directives)
+    .map(([directive, sources]) => `${directive} ${sources.join(' ')}`)
+    .join('; ');
+  return directives;
+}
+
+/**
+ * Generate security headers from configuration
+ * @param config - Application configuration
+ * @returns Security headers object including CORS and CSP
  */
 export function getCorsHeaders(config: typeof CONFIG): Record<string, string> {
+  const corsOrigins = config.security.cors.allowedOrigins.length > 0 
+    ? config.security.cors.allowedOrigins.join(', ')
+    : '*'; // Fallback to wildcard if none specified (development only)
+
   return {
-    'Access-Control-Allow-Origin': config.security.cors.allowedOrigins.join(', '),
+    // CORS headers
+    'Access-Control-Allow-Origin': corsOrigins,
     'Access-Control-Allow-Methods': config.security.cors.allowedMethods.join(', '),
     'Access-Control-Allow-Headers': config.security.cors.allowedHeaders.join(', '),
+    
+    // Security headers
+    'Content-Security-Policy': generateCSPHeader(config),
+    'X-Content-Type-Options': 'nosniff',
+    'X-Frame-Options': 'DENY',
+    'X-XSS-Protection': '1; mode=block',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
   };
 }
 

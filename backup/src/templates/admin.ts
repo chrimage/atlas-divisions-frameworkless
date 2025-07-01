@@ -4,28 +4,46 @@
 
 import { generateThemeCSS } from '../styles/theme.js';
 import type { CloudflareAccessUser } from '../types/index.js';
+import { generateCSRFToken, storeCSRFToken, getSessionId } from '../utils/csrf.js';
+
+/**
+ * HTML escape utility to prevent XSS attacks
+ */
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 export function getAdminHTML(submissions: any[], user: CloudflareAccessUser | null = null, config: any): string {
+	// Generate CSRF token for this session
+	const csrfToken = generateCSRFToken();
+	const sessionId = getSessionId(user);
+	storeCSRFToken(sessionId, csrfToken);
 	const submissionRows = submissions.map(sub => `
 		<tr class="submission-row">
-			<td class="name-cell">${sub.name}</td>
-			<td class="email-cell">${sub.email || '<span class="no-data">N/A</span>'}</td>
-			<td class="phone-cell">${sub.phone || '<span class="no-data">N/A</span>'}</td>
-			<td class="service-cell"><span class="service-badge">${sub.service_type}</span></td>
-			<td class="message-cell" title="${sub.message}">
-				<div class="message-preview">${sub.message.substring(0, 50)}${sub.message.length > 50 ? '...' : ''}</div>
+			<td class="name-cell">${escapeHtml(sub.name || '')}</td>
+			<td class="email-cell">${sub.email ? escapeHtml(sub.email) : '<span class="no-data">N/A</span>'}</td>
+			<td class="phone-cell">${sub.phone ? escapeHtml(sub.phone) : '<span class="no-data">N/A</span>'}</td>
+			<td class="service-cell"><span class="service-badge">${escapeHtml(sub.service_type || '')}</span></td>
+			<td class="message-cell" title="${escapeHtml(sub.message || '')}">
+				<div class="message-preview">${escapeHtml((sub.message || '').substring(0, 50))}${(sub.message || '').length > 50 ? '...' : ''}</div>
 			</td>
 			<td class="status-cell">
 				<form method="POST" action="/admin/update" class="status-form">
-					<input type="hidden" name="id" value="${sub.id}">
-					<select name="status" class="status-select ${sub.status}" onchange="this.form.submit()">
+					<input type="hidden" name="id" value="${escapeHtml(sub.id || '')}">
+					<input type="hidden" name="csrf_token" value="${escapeHtml(csrfToken)}">
+					<select name="status" class="status-select ${escapeHtml(sub.status || '')}" data-auto-submit="true">
 						${config.admin.statusOptions.map((option: any) =>
-							`<option value="${option.value}" ${sub.status === option.value ? 'selected' : ''}>${option.label}</option>`
+							`<option value="${escapeHtml(option.value)}" ${sub.status === option.value ? 'selected' : ''}>${escapeHtml(option.label)}</option>`
 						).join('')}
 					</select>
 				</form>
 			</td>
-			<td class="date-cell">${new Date(sub.created_at).toLocaleDateString()}</td>
+			<td class="date-cell">${escapeHtml(new Date(sub.created_at).toLocaleDateString())}</td>
 		</tr>
 	`).join('');
 
@@ -351,7 +369,7 @@ export function getAdminHTML(submissions: any[], user: CloudflareAccessUser | nu
 	<div class="header">
 		<div class="header-top">
 			<h1>${config.company.emoji} ${config.company.name} - ${config.admin.title}</h1>
-			${user ? `<div class="user-info">👤 ${user.email}</div>` : ''}
+			${user ? `<div class="user-info">👤 ${escapeHtml(user.email)}</div>` : ''}
 		</div>
 		
 		<div class="stats">
@@ -402,6 +420,18 @@ export function getAdminHTML(submissions: any[], user: CloudflareAccessUser | nu
 			<a href="/">${config.admin.emptyState.buttonText}</a>
 		</div>
 	` : ''}
+	
+	<script>
+		// Handle auto-submit for status changes
+		document.addEventListener('DOMContentLoaded', function() {
+			const selects = document.querySelectorAll('[data-auto-submit="true"]');
+			selects.forEach(function(select) {
+				select.addEventListener('change', function() {
+					this.form.submit();
+				});
+			});
+		});
+	</script>
 </body>
 </html>`;
 }
